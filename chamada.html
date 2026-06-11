@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Turmas - Musicar-te</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+
+  <script>
+    if (
+      localStorage.getItem('theme') === 'dark' ||
+      (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    ) {
+      document.documentElement.classList.add('dark');
+    }
+
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+      const icon = document.getElementById('theme-icon');
+      if (document.documentElement.classList.contains('dark')) {
+        localStorage.setItem('theme', 'dark');
+        icon.textContent = '☀️';
+      } else {
+        localStorage.setItem('theme', 'light');
+        icon.textContent = '🌙';
+      }
+    }
+
+    function toggleMenu() {
+      document.getElementById("mobile-menu").classList.toggle("hidden");
+    }
+  </script>
+</head>
+
+<body class="min-h-screen flex flex-col text-gray-800 dark:text-white transition duration-300
+bg-gradient-to-r from-pink-300 via-pink-200 to-orange-300
+dark:from-[#0f172a] dark:via-[#172554] dark:to-[#020617]">
+
+  <!-- HEADER -->
+  <header class="bg-white shadow-md dark:bg-gray-800">
+    <nav class="container mx-auto flex justify-between items-center px-6 py-4">
+
+      <div class="flex items-center gap-3">
+  <img src="img/logoMusicarte.png" alt="Logo Musicar-te" class="h-16">
+      </div>
+      
+      <button class="md:hidden text-2xl" onclick="toggleMenu()">☰</button>
+
+      <ul class="hidden md:flex items-center space-x-6 font-medium">
+        <li><a href="index.html" class="hover:text-pink-500">Início</a></li>
+        <li><a href="cadastro.html" class="hover:text-pink-500">Cadastro</a></li>
+
+        <!-- ATIVO -->
+        <li>
+          <a href="chamada.html"
+            class="px-4 py-2 rounded-full bg-pink-100 text-pink-600 dark:bg-pink-900 dark:text-pink-300">
+            Chamada
+          </a>
+        </li>
+
+        <li><a href="alunos.html" class="hover:text-pink-500">Alunos</a></li>
+
+        <li>
+          <a id="btnLogin" href="login.html"
+            class="px-4 py-2 rounded-full border border-pink-500 text-pink-500 hover:bg-pink-500 hover:text-white transition">
+            Login
+          </a>
+        </li>
+
+        <li>
+          <button onclick="toggleDarkMode()" class="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded">
+            <span id="theme-icon">🌙</span>
+          </button>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- MOBILE -->
+    <div id="mobile-menu" class="md:hidden hidden bg-white dark:bg-gray-900">
+      <ul class="flex flex-col p-4 space-y-3 text-center">
+        <li><a href="index.html">Início</a></li>
+        <li><a href="cadastro.html">Cadastro</a></li>
+        <li><a href="turmas.html" class="bg-pink-100 text-pink-600 rounded-full py-2">Chamada</a></li>
+        <li><a href="#">Histórico</a></li>
+        <li><a href="#">Relatório</a></li>
+
+        <li><a id="btnLoginMobile" href="login.html" 
+          class="border border-pink-500 text-pink-500 rounded-full py-2">Login</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <!-- TURMAS -->
+  <main class="flex-grow flex items-center justify-center px-6 py-16">
+    <div class="w-full max-w-5xl">
+
+      <h2 class="text-3xl font-bold text-center text-pink-600 dark:text-pink-400 mb-10">
+        Selecione a Turma
+      </h2>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+
+        <!-- CARDS COM REDIRECIONAMENTO DIRETO -->
+
+        <div onclick="window.location.href='turmaRouxinol.html'"
+          class="cursor-pointer bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md text-center hover:scale-105 transition">
+          <h3 class="text-xl font-bold">Rouxinol</h3>
+        </div>
+
+        <div onclick="window.location.href='turmaCanario.html'"
+          class="cursor-pointer bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md text-center hover:scale-105 transition">
+          <h3 class="text-xl font-bold">Canário</h3>
+        </div>
+
+        <div onclick="window.location.href='turmaSabia.html'"
+          class="cursor-pointer bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md text-center hover:scale-105 transition">
+          <h3 class="text-xl font-bold">Sabiá</h3>
+        </div>
+
+        <div onclick="window.location.href='turmaAndorinha.html'"
+          class="cursor-pointer bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md text-center hover:scale-105 transition">
+          <h3 class="text-xl font-bold">Andorinha</h3>
+        </div>
+
+        <div onclick="window.location.href='turmaBeijaFlor.html'"
+          class="cursor-pointer bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md text-center hover:scale-105 transition">
+          <h3 class="text-xl font-bold">Beija-Flor</h3>
+        </div>
+
+        <div onclick="window.location.href='turmaBemTeVi.html'"
+          class="cursor-pointer bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md text-center hover:scale-105 transition">
+          <h3 class="text-xl font-bold">Bem-Te-Vi</h3>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="bg-gray-200 dark:bg-gray-800 text-center py-4">
+    <p>&copy; 2026 Musicar-te</p>
+  </footer>
+
+  <!-- MODAL DE LOGOUT PERSONALIZADO -->
+  <div id="logoutModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 dark:bg-opacity-70">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4">
+      <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-4 text-center">Fazer Logout?</h2>
+      <p class="text-gray-600 dark:text-gray-400 text-center mb-8">
+        Você tem certeza que deseja sair? Terá que fazer login novamente.
+      </p>
+      <div class="flex gap-4">
+        <button id="logoutCancel" class="flex-1 px-4 py-3 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+          Cancelar
+        </button>
+        <button id="logoutConfirm" class="flex-1 px-4 py-3 rounded-lg bg-pink-600 text-white font-semibold hover:bg-pink-700 transition">
+          Logout
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT PARA MOSTRAR NOME DO USUÁRIO LOGADO -->
+  <script>
+    function mostrarModalLogout(callback) {
+      const modal = document.getElementById('logoutModal');
+      const btnConfirm = document.getElementById('logoutConfirm');
+      const btnCancel = document.getElementById('logoutCancel');
+      modal.classList.remove('hidden');
+      const handleConfirm = () => {
+        modal.classList.add('hidden');
+        btnConfirm.removeEventListener('click', handleConfirm);
+        btnCancel.removeEventListener('click', handleCancel);
+        callback(true);
+      };
+      const handleCancel = () => {
+        modal.classList.add('hidden');
+        btnConfirm.removeEventListener('click', handleConfirm);
+        btnCancel.removeEventListener('click', handleCancel);
+        callback(false);
+      };
+      btnConfirm.addEventListener('click', handleConfirm);
+      btnCancel.addEventListener('click', handleCancel);
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+      const usuario = localStorage.getItem("usuario");
+      const btnLogin = document.getElementById("btnLogin");
+      const btnLoginMobile = document.getElementById("btnLoginMobile");
+
+      if (usuario && btnLogin) {
+        const inicial = usuario.charAt(0).toUpperCase();
+        
+        btnLogin.textContent = inicial;
+        btnLogin.href = "#";
+        btnLogin.classList.add('cursor-pointer');
+        
+        btnLogin.addEventListener('click', function(e) {
+          e.preventDefault();
+          mostrarModalLogout(function(confirmed) {
+            if (confirmed) {
+              localStorage.removeItem("usuario");
+              window.location.href = "index.html";
+            }
+          });
+        });
+      }
+
+      if (usuario && btnLoginMobile) {
+        const inicial = usuario.charAt(0).toUpperCase();
+        
+        btnLoginMobile.textContent = inicial;
+        btnLoginMobile.href = "#";
+        btnLoginMobile.classList.add('cursor-pointer');
+        
+        btnLoginMobile.addEventListener('click', function(e) {
+          e.preventDefault();
+          mostrarModalLogout(function(confirmed) {
+            if (confirmed) {
+              localStorage.removeItem("usuario");
+              window.location.href = "index.html";
+            }
+          });
+        });
+      }
+    });
+  </script>
+
+</body>
+</html>

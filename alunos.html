@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gerenciamento de Alunos - Musicar-te</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
+
+  <style>
+    html { scrollbar-gutter: stable; }
+    body.modal-active { overflow: hidden; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #db2777; border-radius: 10px; }
+  </style>
+
+  <script>
+    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    }
+
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+      const icons = document.querySelectorAll('.theme-icon');
+      const isDark = document.documentElement.classList.contains('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      icons.forEach(icon => icon.textContent = isDark ? '☀️' : '🌙');
+    }
+
+    function toggleMenu() {
+      document.getElementById('mobile-menu').classList.toggle('hidden');
+    }
+
+    function obterTurmaPorIdade(anos) {
+      if (anos >= 3 && anos <= 6) return 'Rouxinol';
+      if (anos >= 7 && anos <= 8) return 'Canário';
+      if (anos >= 9 && anos <= 10) return 'Sabiá';
+      if (anos >= 11 && anos <= 13) return 'Andorinha';
+      if (anos >= 14 && anos <= 23) return 'Beija-flor';
+      if (anos >= 24) return 'Bem-te-vi';
+      return '';
+    }
+
+    function atualizarTurmaEditPorData() {
+      const data = document.getElementById('editData').value;
+      const nasc = new Date(data);
+      if (!data || isNaN(nasc.getTime())) return;
+
+      const hoje = new Date();
+      let anos = hoje.getFullYear() - nasc.getFullYear();
+      let meses = hoje.getMonth() - nasc.getMonth();
+
+      if (meses < 0) {
+        anos--;
+        meses += 12;
+      }
+
+      const turma = obterTurmaPorIdade(anos);
+      if (turma) {
+        document.getElementById('editTurma').value = turma;
+      }
+    }
+
+    // --- LÓGICA DE GERENCIAMENTO ---
+
+    function getAlunos() {
+      const data = localStorage.getItem('alunos');
+      return data ? JSON.parse(data) : [];
+    }
+
+    function saveAlunos(alunos) {
+      localStorage.setItem('alunos', JSON.stringify(alunos));
+    }
+
+    // Variável para armazenar o ID real do aluno sendo editado
+    let currentEditingId = null;
+    
+    // Variábel para armazenar o aluno que será excluído
+    let alunoParaExcluir = null;
+
+    function renderAlunos() {
+      const alunos = getAlunos();
+      const filterNome = document.getElementById('searchName').value.toLowerCase();
+      const filterTurma = document.getElementById('filterTurma').value;
+      const tbody = document.getElementById('alunosTableBody');
+      
+      tbody.innerHTML = '';
+
+      // Mapeamos os alunos com seu índice original para não perder a referência ao filtrar
+      const filteredAlunos = alunos
+        .map((aluno, index) => ({ ...aluno, originalIndex: index }))
+        .filter(aluno => {
+          const matchesNome = (aluno.nome || "").toLowerCase().includes(filterNome);
+          const matchesTurma = filterTurma === "" || aluno.turma === filterTurma;
+          return matchesNome && matchesTurma;
+        });
+
+      if (filteredAlunos.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Nenhum aluno encontrado.</td></tr>`;
+        return;
+      }
+
+      filteredAlunos.forEach((aluno) => {
+        tbody.innerHTML += `
+          <tr class="hover:bg-pink-50 dark:hover:bg-gray-700 transition border-b dark:border-gray-700">
+            <td class="px-4 py-4 font-medium">${aluno.nome || 'Sem Nome'}</td>
+            <td class="px-4 py-4 capitalize">${aluno.turma || 'Geral'}</td>
+            <td class="px-4 py-4">${aluno.telefone || '-'}</td>
+            <td class="px-4 py-4">${aluno.respNome || '-'}</td>
+            <td class="px-4 py-4 flex space-x-3">
+              <button onclick="openEditModal(${aluno.originalIndex})" class="px-3 py-1 bg-pink-100 text-pink-600 dark:bg-pink-900 dark:text-pink-300 rounded-md font-bold hover:bg-pink-200 transition">Ver/Editar</button>
+              <button onclick="deleteAluno(${aluno.originalIndex})" class="px-3 py-1 bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300 rounded-md font-bold hover:bg-red-200 transition">Excluir</button>
+            </td>
+          </tr>`;
+      });
+    }
+
+    function openEditModal(originalIndex) {
+      const alunos = getAlunos();
+      const aluno = alunos[originalIndex];
+      currentEditingId = originalIndex;
+
+      // PREENCHIMENTO DOS CAMPOS (Mantendo os dados já inseridos)
+      document.getElementById('editNome').value = aluno.nome || '';
+      document.getElementById('editData').value = aluno.data || '';
+      document.getElementById('editSexo').value = aluno.sexo || '';
+      document.getElementById('editTurma').value = aluno.turma || 'rouxinol';
+      
+      // Endereço
+      document.getElementById('editRua').value = aluno.rua || '';
+      document.getElementById('editBairro').value = aluno.bairro || '';
+      document.getElementById('editCEP').value = aluno.cep || '';
+      document.getElementById('editNumero').value = aluno.numero || '';
+      document.getElementById('editCidade').value = aluno.cidade || '';
+      
+      // Contato
+      document.getElementById('editTelefone').value = aluno.telefone || '';
+      document.getElementById('editEmail').value = aluno.email || '';
+      
+      // Responsável
+      document.getElementById('editRespNome').value = aluno.respNome || '';
+      document.getElementById('editRespRG').value = aluno.respRG || '';
+      document.getElementById('editRespCPF').value = aluno.respCPF || '';
+      document.getElementById('editRespTel').value = aluno.respTel || '';
+      document.getElementById('editRespEmail').value = aluno.respEmail || '';
+
+      const modal = document.getElementById('editModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.body.classList.add('modal-active');
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').classList.add('hidden');
+      document.getElementById('editModal').classList.remove('flex');
+      document.body.classList.remove('modal-active');
+      currentEditingId = null;
+    }
+
+    function fecharAlerta() {
+      document
+      .getElementById("alertaSucesso")
+      .classList.add("hidden");
+
+      alunoParaExcluir = null;
+    }
+
+    function fecharAlertaEdicao() {
+  document
+    .getElementById("alertaEdicao")
+    .classList.add("hidden");
+}
+
+    function validarEditForm() {
+      const form = document.querySelector('#editModal form');
+      const camposObrigatorios = form.querySelectorAll('[required]');
+      let valido = true;
+
+      camposObrigatorios.forEach(campo => {
+        campo.classList.remove('error-input');
+        if (!campo.value || campo.value.trim() === '') {
+          campo.classList.add('error-input');
+          valido = false;
+        }
+      });
+
+      if (!valido) {
+        alert('Por favor, preencha todos os campos obrigatórios marcados com *.');
+        const primeiroErro = form.querySelector('.error-input');
+        if (primeiroErro) {
+          primeiroErro.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+
+      return valido;
+    }
+
+    function saveEdit(event) {
+      event.preventDefault();
+      if (!validarEditForm()) return;
+
+      const alunos = getAlunos();
+      
+      if (currentEditingId !== null) {
+        const data = document.getElementById('editData').value;
+        const nasc = new Date(data);
+        let turmaAtualizada = document.getElementById('editTurma').value;
+
+        if (data && !isNaN(nasc.getTime())) {
+          const hoje = new Date();
+          let anos = hoje.getFullYear() - nasc.getFullYear();
+          let meses = hoje.getMonth() - nasc.getMonth();
+
+          if (meses < 0) {
+            anos--;
+            meses += 12;
+          }
+
+          const turmaSugerida = obterTurmaPorIdade(anos);
+          if (turmaSugerida) {
+            turmaAtualizada = turmaSugerida;
+          }
+        }
+
+        alunos[currentEditingId] = {
+          ...alunos[currentEditingId], // Mantém outros campos que não estão no form (se houver)
+          nome: document.getElementById('editNome').value,
+          data: document.getElementById('editData').value,
+          sexo: document.getElementById('editSexo').value,
+          turma: turmaAtualizada,
+          rua: document.getElementById('editRua').value,
+          bairro: document.getElementById('editBairro').value,
+          cep: document.getElementById('editCEP').value,
+          numero: document.getElementById('editNumero').value,
+          cidade: document.getElementById('editCidade').value,
+          telefone: document.getElementById('editTelefone').value,
+          email: document.getElementById('editEmail').value,
+          respNome: document.getElementById('editRespNome').value,
+          respRG: document.getElementById('editRespRG').value,
+          respCPF: document.getElementById('editRespCPF').value,
+          respTel: document.getElementById('editRespTel').value,
+          respEmail: document.getElementById('editRespEmail').value
+        };
+        
+        saveAlunos(alunos);
+        renderAlunos();
+        closeEditModal();
+
+      document
+        .getElementById("alertaEdicao")
+        .classList.remove("hidden");
+      }
+    }
+
+      function deleteAluno(originalIndex) {
+        alunoParaExcluir = originalIndex;
+
+         document
+        .getElementById("alertaSucesso")
+        .classList.remove("hidden");
+      }
+
+      function confirmarExclusao() {
+  if (alunoParaExcluir !== null) {
+    const alunos = getAlunos();
+
+    alunos.splice(alunoParaExcluir, 1);
+
+    saveAlunos(alunos);
+    renderAlunos();
+  }
+
+  document
+    .getElementById("alertaSucesso")
+    .classList.add("hidden");
+
+  alunoParaExcluir = null;
+}
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderAlunos();
+      const editDataInput = document.getElementById('editData');
+      if (editDataInput) {
+        editDataInput.addEventListener('change', atualizarTurmaEditPorData);
+      }
+    });
+  </script>
+</head>
+
+<body class="min-h-screen flex flex-col text-gray-800 dark:text-white transition duration-300
+bg-gradient-to-r from-pink-300 via-pink-200 to-orange-300
+dark:from-[#0f172a] dark:via-[#172554] dark:to-[#020617]">
+
+  <header class="bg-white shadow-md dark:bg-gray-800 w-full sticky top-0 z-40">
+    <nav class="container mx-auto flex justify-between items-center px-6 py-4">
+
+<div class="flex items-center gap-3">
+  <img src="img/logoMusicarte.png" alt="Logo Musicar-te" class="h-16">
+      </div>
+
+      <ul class="hidden md:flex items-center space-x-6 font-medium">
+        <li><a href="index.html" class="hover:text-pink-500">Início</a></li>
+        <li><a href="cadastro.html" class="hover:text-pink-500">Cadastro</a></li>
+        <li><a href="chamada.html" class="hover:text-pink-500">Chamada</a></li>
+        <li><a href="alunos.html" class="px-4 py-2 rounded-full bg-pink-100 text-pink-600 dark:bg-pink-900 dark:text-pink-300">Alunos</a></li>
+
+        <li>
+          <a id="btnLogin" href="login.html"
+            class="px-4 py-2 rounded-full border border-pink-500 text-pink-500 
+            hover:bg-pink-500 hover:text-white transition dark:border-pink-500 dark:text-pink-500 dark:hover:bg-pink-500 dark:hover:text-white">
+            Login
+          </a>
+        </li> 
+
+        <li><button onclick="toggleDarkMode()" class="px-3 py-1 rounded-md bg-gray-100 dark:bg-gray-700"><span class="theme-icon">🌙</span></button></li>
+    
+      </ul>
+    </nav>
+  </header>
+
+  <main class="flex-grow container mx-auto px-4 py-10">
+    <div class="flex flex-col md:flex-row justify-between items-center mb-8">
+      <h2 class="text-3xl font-bold text-pink-600 dark:text-pink-400">Gestão de Alunos</h2>
+      <a href="cadastro.html" class="mt-4 md:mt-0 px-6 py-2 bg-pink-600 text-white rounded-full font-bold hover:bg-pink-700 transition shadow-lg">+ Novo Cadastro</a>
+    </div>
+
+    <div class="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4 bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md border dark:border-gray-700">
+      <div class="flex flex-col">
+        <label class="mb-2 text-sm font-semibold">Pesquisar por Nome</label>
+        <input type="text" id="searchName" oninput="renderAlunos()" placeholder="Digite para buscar..." class="px-4 py-2 rounded-lg border dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-pink-500 transition">
+      </div>
+      <div class="flex flex-col">
+        <label class="mb-2 text-sm font-semibold">Filtrar por Turma</label>
+        <select id="filterTurma" onchange="renderAlunos()" class="px-4 py-2 rounded-lg border dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-pink-500">
+          <option value="">Todas as Turmas</option>
+          <option value="Rouxinol">Rouxinol</option>
+          <option value="Canário">Canário</option>
+          <option value="Sabiá">Sabiá</option>
+          <option value="Andorinha">Andorinha</option>
+          <option value="Beija-flor">Beija-flor</option>
+          <option value="Bem-te-vi">Bem-te-vi</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto bg-white dark:bg-gray-800 rounded-2xl shadow-xl border dark:border-gray-700">
+      <table class="min-w-full text-sm md:text-base">
+        <thead class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-b dark:border-gray-600">
+          <tr>
+            <th class="px-4 py-4 text-left font-bold uppercase text-xs tracking-wider">Nome do Aluno</th>
+            <th class="px-4 py-4 text-left font-bold uppercase text-xs tracking-wider">Turma</th>
+            <th class="px-4 py-4 text-left font-bold uppercase text-xs tracking-wider">Telefone</th>
+            <th class="px-4 py-4 text-left font-bold uppercase text-xs tracking-wider">Responsável</th>
+            <th class="px-4 py-4 text-left font-bold uppercase text-xs tracking-wider">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="alunosTableBody" class="divide-y divide-gray-100 dark:divide-gray-700"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- MODAL DE EDIÇÃO -->
+  <div id="editModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
+    <div class="bg-white dark:bg-gray-800 w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="bg-pink-600 px-8 py-5 flex justify-between items-center text-white shrink-0">
+        <div>
+          <h3 class="font-bold text-xl">Ficha Cadastral</h3>
+          <p class="text-pink-100 text-xs">Visualize ou altere os dados do aluno</p>
+        </div>
+        <button onclick="closeEditModal()" class="text-3xl hover:scale-110 transition">&times;</button>
+      </div>
+      
+      <form onsubmit="saveEdit(event)" class="p-8 space-y-8 overflow-y-auto custom-scrollbar">
+        <section>
+          <h4 class="font-bold text-pink-600 dark:text-pink-400 border-b-2 border-pink-100 dark:border-pink-900 mb-5 pb-1 uppercase text-xs tracking-widest">1. Dados Pessoais</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="md:col-span-2"><label class="block text-xs font-bold mb-1 text-gray-500">Nome Completo</label><input type="text" id="editNome" required class="w-full px-4 py-2 rounded-xl border dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-pink-500 transition"></div>
+            <div><label class="block text-xs font-bold mb-1 text-gray-500">Data de Nascimento</label><input type="date" id="editData" required class="w-full px-4 py-2 rounded-xl border dark:bg-gray-700 dark:border-gray-600 outline-none"></div>
+            <div><label class="block text-xs font-bold mb-1 text-gray-500">Sexo</label><select id="editSexo" required class="w-full px-4 py-2 rounded-xl border dark:bg-gray-700 dark:border-gray-600 outline-none"><option value="">Selecione</option><option>Feminino</option><option>Masculino</option><option>Outro</option></select></div>
+            <div><label class="block text-xs font-bold mb-1 text-gray-500">Turma Designada</label><select id="editTurma" required class="w-full px-4 py-2 rounded-xl border dark:bg-gray-700 dark:border-gray-600 outline-none"><option value="Rouxinol">Rouxinol</option><option value="Canário">Canário</option><option value="Sabiá">Sabiá</option><option value="Andorinha">Andorinha</option><option value="Beija-flor">Beija-flor</option><option value="Bem-te-vi">Bem-te-vi</option></select></div>
+          </div>
+        </section>
+
+        <section>
+          <h4 class="font-bold text-pink-600 dark:text-pink-400 border-b-2 border-pink-100 dark:border-pink-900 mb-5 pb-1 uppercase text-xs tracking-widest">2. Endereço</h4>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div class="md:col-span-2"><label class="block text-xs font-bold mb-1 text-gray-500">Rua/Logradouro</label><input type="text" id="editRua" class="w-full px-4 py-2 rounded-xl border dark:bg-gray-700 dark:border-gray-600 outline-none"></div>
+            <div><label class="block text-xs font-bold mb-1 text-gray-500">Número</label><input type="text" id="editNumero" class="w-full px-4 py-2 rounded-xl border dark:bg-gray-700 dark:border-gray-600 outline-none"></div>
+            <div><label class="block text-xs font-bold mb-1 text-gray-500">Bairro</label><input type="text" id="editBairro" class="w-full px-4 py-2 rounded-xl border dark:bg-gray-700 dark:border-gray-600 outline-none"></div>
+            <div><label class="block text-xs font-bold mb-1 text-gray-500">CEP</label><input type="text" id="editCEP" class="w-full px-4 py-2 rounded-xl border dark:bg-gray-700 dark:border-gray-600 outline-none"></div>
+            <div><label class="block text-xs font-bold mb-1 text-gray-500">Cidade</label><input type="text" id="editCidade" class="w-full px-4 py-2 rounded-xl border dark:bg-gray-700 dark:border-gray-600 outline-none"></div>
+          </div>
+        </section>
+
+        <section>
+          <h4 class="font-bold text-pink-600 dark:text-pink-400 border-b-2 border-pink-100 dark:border-pink-900 mb-5 pb-1 uppercase text-xs tracking-widest">3. Contato e Responsável</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div><label class="block text-xs font-bold mb-1 text-gray-500">Telefone Aluno</label><input type="tel" id="editTelefone" class="w-full px-4 py-2 rounded-xl border dark:bg-gray-700 dark:border-gray-600 outline-none"></div>
+            <div><label class="block text-xs font-bold mb-1 text-gray-500">E-mail Aluno</label><input type="email" id="editEmail" class="w-full px-4 py-2 rounded-xl border dark:bg-gray-700 dark:border-gray-600 outline-none"></div>
+            <div class="md:col-span-2"><label class="block text-xs font-bold mb-1 text-gray-500 mt-2">Nome do Responsável Legal</label><input type="text" id="editRespNome" class="w-full px-4 py-2 rounded-xl border dark:bg-gray-700 dark:border-gray-600 outline-none"></div>
+            <div><label class="block text-xs font-bold mb-1 text-gray-500">RG Responsável</label><input type="text" id="editRespRG" class="w-full px-4 py-2 rounded-xl border dark:bg-gray-700 dark:border-gray-600 outline-none"></div>
+            <div><label class="block text-xs font-bold mb-1 text-gray-500">CPF Responsável</label><input type="text" id="editRespCPF" class="w-full px-4 py-2 rounded-xl border dark:bg-gray-700 dark:border-gray-600 outline-none"></div>
+            <div><label class="block text-xs font-bold mb-1 text-gray-500">Telefone Responsável</label><input type="tel" id="editRespTel" class="w-full px-4 py-2 rounded-xl border dark:bg-gray-700 dark:border-gray-600 outline-none"></div>
+            <div><label class="block text-xs font-bold mb-1 text-gray-500">E-mail Responsável</label><input type="email" id="editRespEmail" class="w-full px-4 py-2 rounded-xl border dark:bg-gray-700 dark:border-gray-600 outline-none"></div>
+          </div>
+        </section>
+
+        <div class="flex space-x-4 pt-6 shrink-0">
+          <button type="button" onclick="closeEditModal()" class="flex-1 px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-2xl font-bold hover:bg-gray-200 transition">Cancelar</button>
+          <button type="submit" class="flex-1 px-6 py-3 bg-pink-600 text-white rounded-2xl font-bold hover:bg-pink-700 shadow-lg transition">Salvar Alterações</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="bg-white dark:bg-gray-800 text-gray-500 text-center py-6 border-t dark:border-gray-700 mt-auto">
+    <p class="text-sm">&copy; 2026 Musicar-te. Gestão Interna.</p>
+  </footer>
+
+  <div id="alertaSucesso"
+  class="fixed inset-0 bg-black/40 flex items-center justify-center hidden z-50">
+
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 w-[90%] max-w-md text-center">
+
+    <div class="text-6xl mb-4">
+      ⚠️
+    </div>
+
+    <h2 class="text-2xl font-bold text-red-600 mb-2">
+      Atenção!
+    </h2>
+
+    <p class="text-gray-600 dark:text-gray-300 mb-6">
+      Tem certeza que deseja excluir este aluno?
+    </p>
+
+    <div class="flex gap-3 justify-center">
+
+      <button
+        onclick="fecharAlerta()"
+        class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-xl font-semibold transition">
+        Cancelar
+      </button>
+
+      <button
+        onclick="confirmarExclusao()"
+        class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-semibold transition">
+        Excluir
+      </button>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- ALERTA DE SUCESSO -->
+<div id="alertaEdicao"
+  class="fixed inset-0 bg-black/40 flex items-center justify-center hidden z-50">
+
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 w-[90%] max-w-md text-center">
+
+    <div class="text-6xl mb-4">
+      ✅
+    </div>
+
+    <h2 class="text-2xl font-bold text-green-600 mb-2">
+      Sucesso!
+    </h2>
+
+    <p class="text-gray-600 dark:text-gray-300 mb-6">
+      Alterações salvas com sucesso.
+    </p>
+
+    <button
+      onclick="fecharAlertaEdicao()"
+      class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition">
+
+      OK
+
+    </button>
+
+  </div>
+</div>
+
+ 
+
+</body>
+</html>
+  

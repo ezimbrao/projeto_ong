@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Agenda e Chamada - Musicar-te</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+
+  <style>
+    @keyframes fade { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+    .animate-fade { animation: fade 0.3s ease; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #db2777; border-radius: 10px; }
+  </style>
+
+  <script>
+    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    }
+
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+      const icon = document.getElementById('theme-icon');
+      const isDark = document.documentElement.classList.contains('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      icon.textContent = isDark ? '☀️' : '🌙';
+    }
+
+    function toggleMenu() {
+      document.getElementById("mobile-menu").classList.toggle("hidden");
+    }
+  </script>
+</head>
+
+<body class="flex flex-col min-h-screen bg-gradient-to-br from-pink-200 to-orange-300 text-gray-800 dark:bg-gradient-to-br dark:from-blue-950 dark:to-orange-950 dark:text-gray-100 transition">
+
+  <!-- HEADER -->
+  <header class="bg-white shadow-md dark:bg-gray-800 sticky top-0 z-40">
+    <nav class="container mx-auto flex justify-between items-center px-6 py-4">
+
+      <div class="flex items-center gap-3">
+  <img src="img/logoMusicarte.png" alt="Logo Musicar-te" class="h-16">
+      </div>
+
+      <button class="md:hidden text-2xl" onclick="toggleMenu()">☰</button>
+      <ul class="hidden md:flex items-center space-x-6 font-medium">
+        <li><a href="index.html" class="hover:text-pink-500">Início</a></li>
+        <li><a href="cadastro.html" class="hover:text-pink-500">Cadastro</a></li>
+        <li><a href="chamada.html" class="px-4 py-2 rounded-full bg-pink-100 text-pink-600 dark:bg-pink-900 dark:text-pink-300">Chamada</a></li>
+        <li><a href="alunos.html" class="hover:text-pink-500">Alunos</a></li>
+        <li>
+          <a id="btnLogin" href="login.html"
+            class="px-4 py-2 rounded-full border border-pink-500 text-pink-500 
+            hover:bg-pink-500 hover:text-white transition dark:border-pink-500 dark:text-pink-500 dark:hover:bg-pink-500 dark:hover:text-white">
+            Login
+          </a>
+        </li> 
+        <li><button onclick="toggleDarkMode()" class="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded"><span id="theme-icon">🌙</span></button></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- BARRA DE NAVEGAÇÃO / VOLTAR -->
+  <div class="container mx-auto px-6 pt-8">
+    <button onclick="window.history.back()" 
+    class="inline-flex items-center gap-2
+    px-5 py-2 rounded-xl 
+    border border-pink-500 bg-pink-800/60 backdrop-blur-sm
+    text-white font-medium
+    hover:bg-pink-500 hover:border-pink-500
+    hover:scale-105
+    transition-all duration-300">
+      ← Voltar para Turmas
+    </button>
+  </div>
+
+  <main class="flex-grow container mx-auto px-6 py-10">
+    <div class="max-w-6xl mx-auto flex flex-col lg:flex-row gap-8">
+      
+      <!-- LADO ESQUERDO: CHAMADA -->
+      <div class="flex-1">
+        <!-- ÁREA DA AGENDA -->
+        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-6 rounded-3xl shadow-xl mb-8 border border-white/20">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+              <h2 class="text-3xl font-bold text-pink-600 dark:text-pink-400" id="displayTurma">Turma: Bem-Te-Vi</h2>
+              <p class="text-gray-500 dark:text-gray-400 font-medium" id="displayData">Data Selecionada: --/--/----</p>
+            </div>
+            <button onclick="openAgendaModal()" class="px-6 py-3 bg-pink-600 text-white rounded-2xl font-bold hover:bg-pink-700 transition shadow-lg flex items-center gap-2">
+              <span>📅</span> Mudar Data
+            </button>
+          </div>
+        </div>
+
+        <!-- LISTA DE CHAMADA -->
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700">
+          <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
+            <span class="text-pink-500">📋</span> Lista de Presença
+          </h3>
+
+          <div class="flex flex-col md:flex-row gap-4 mb-8">
+            <button onclick="marcarTodos('presente')" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl transition shadow-md">✔ Todos Presentes</button>
+            <button onclick="marcarTodos('ausente')" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition shadow-md">✖ Todos Ausentes</button>
+          </div>
+
+          <div id="listaAlunos" class="space-y-3">
+            <!-- Alunos dinâmicos -->
+          </div>
+
+          <button onclick="salvarChamada()" class="w-full mt-10 bg-pink-600 hover:bg-pink-700 text-white font-black py-4 rounded-2xl transition-all transform hover:scale-[1.02] shadow-xl">
+            💾 SALVAR CHAMADA DO DIA
+          </button>
+        </div>
+      </div>
+
+      <!-- LADO DIREITO: HISTÓRICO DE CORREÇÕES -->
+      <aside class="w-full lg:w-80 bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm p-6 rounded-3xl border border-white/20 flex flex-col h-fit sticky top-24">
+        <h4 class="font-bold text-gray-700 dark:text-gray-300 mb-4 uppercase text-xs tracking-widest flex items-center">
+          <span class="mr-2">🕒</span> Histórico de Correções
+        </h4>
+        <div id="historicoAgenda" class="space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
+          <p class="text-xs text-gray-500 italic">Nenhuma correção registrada.</p>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- MODAL DE SELEÇÃO DE DATA -->
+  <div id="agendaModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
+    <div class="bg-white dark:bg-gray-800 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-fade">
+      <div class="bg-pink-600 px-8 py-5 text-white flex justify-between items-center">
+        <h3 class="font-bold text-xl">Mudar Data da Aula</h3>
+        <button onclick="closeAgendaModal()" class="text-3xl">&times;</button>
+      </div>
+      
+      <form onsubmit="confirmAgenda(event)" class="p-8 space-y-6">
+        <div>
+          <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Selecione o novo dia</label>
+          <input type="date" id="editDataAula" onchange="checkIfCorrection()" required class="w-full px-4 py-3 rounded-xl border dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-pink-500">
+          <p class="text-[10px] text-gray-400 mt-2">* Para mudar de turma, use o botão "Voltar" e selecione a sala desejada.</p>
+        </div>
+
+        <!-- JUSTIFICATIVA (Só se for correção de registro salvo) -->
+        <div id="secaoJustificativa" class="hidden pt-4 border-t dark:border-gray-700 animate-fade">
+          <p class="text-[11px] font-bold text-red-500 mb-3 uppercase tracking-wider italic">⚠️ Alteração em registro existente. Justifique:</p>
+          <div class="space-y-4">
+            <textarea id="editMotivo" placeholder="Motivo da correção..." class="w-full px-4 py-3 rounded-xl border dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-pink-500 h-24 text-sm"></textarea>
+            <input type="text" id="editAutor" placeholder="Seu nome (Responsável)" class="w-full px-4 py-3 rounded-xl border dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-pink-500 text-sm">
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-4">
+          <button type="button" onclick="closeAgendaModal()" class="flex-1 py-3 bg-gray-100 dark:bg-gray-700 rounded-xl font-bold">Cancelar</button>
+          <button type="submit" class="flex-1 py-3 bg-pink-600 text-white rounded-xl font-bold hover:bg-pink-700 shadow-lg">Confirmar Data</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="bg-white/50 dark:bg-gray-800/50 text-center py-6 mt-auto">
+    <p class="text-sm font-medium">&copy; 2026 Musicar-te - Gestão de Turma</p>
+  </footer>
+
+  <script>
+    let configTurma = {
+      nome: "Bem-Te-Vi", // Mantido fixo nesta tela
+      data: new Date().toISOString().split('T')[0],
+      historico: JSON.parse(localStorage.getItem('historico_chamada_ajustes') || '[]')
+    };
+
+    function atualizarDisplay() {
+      document.getElementById('displayTurma').textContent = `Turma: ${configTurma.nome.charAt(0).toUpperCase() + configTurma.nome.slice(1)}`;
+      document.getElementById('displayData').textContent = `Data Selecionada: ${configTurma.data.split('-').reverse().join('/')}`;
+      renderLista();
+      renderHistorico();
+    }
+
+    function openAgendaModal() {
+      document.getElementById('editDataAula').value = configTurma.data;
+      document.getElementById('secaoJustificativa').classList.add('hidden');
+      document.getElementById('agendaModal').classList.remove('hidden');
+      document.getElementById('agendaModal').classList.add('flex');
+    }
+
+    function closeAgendaModal() {
+      document.getElementById('agendaModal').classList.add('hidden');
+    }
+
+    function checkIfCorrection() {
+      const novaData = document.getElementById('editDataAula').value;
+      const mudou = (novaData !== configTurma.data);
+      const jaTinhaSalvo = localStorage.getItem(`chamada_${configTurma.nome}_${configTurma.data}`);
+
+      if (mudou && jaTinhaSalvo) {
+        document.getElementById('secaoJustificativa').classList.remove('hidden');
+      } else {
+        document.getElementById('secaoJustificativa').classList.add('hidden');
+      }
+    }
+
+    function confirmAgenda(e) {
+      e.preventDefault();
+      const novaData = document.getElementById('editDataAula').value;
+      const motivo = document.getElementById('editMotivo').value;
+      const autor = document.getElementById('editAutor').value;
+
+      const jaTinhaSalvo = localStorage.getItem(`chamada_${configTurma.nome}_${configTurma.data}`);
+      const mudou = (novaData !== configTurma.data);
+
+      if (mudou && jaTinhaSalvo) {
+        if (!motivo || !autor) {
+          alert("Por favor, preencha a justificativa para corrigir um registro existente.");
+          return;
+        }
+        
+        const log = {
+          dataHora: new Date().toLocaleString('pt-BR'),
+          autor: autor,
+          motivo: motivo,
+          detalhe: `CORREÇÃO DE DATA: ${configTurma.data} ➔ ${novaData}`
+        };
+        configTurma.historico.push(log);
+        localStorage.setItem('historico_chamada_ajustes', JSON.stringify(configTurma.historico));
+      }
+
+      configTurma.data = novaData;
+      atualizarDisplay();
+      closeAgendaModal();
+    }
+
+    function renderHistorico() {
+      const container = document.getElementById('historicoAgenda');
+      const logsTurma = configTurma.historico.filter(h => h.detalhe.includes('DATA'));
+      
+      if (logsTurma.length === 0) {
+        container.innerHTML = '<p class="text-xs text-gray-500 italic">Nenhuma correção registrada.</p>';
+        return;
+      }
+      container.innerHTML = logsTurma.map(h => `
+        <div class="bg-white/50 dark:bg-gray-700/50 p-3 rounded-xl border dark:border-gray-700 shadow-sm">
+          <p class="text-[10px] font-bold text-red-500 mb-1 uppercase">${h.dataHora}</p>
+          <p class="text-xs font-bold mb-1">Autor: ${h.autor}</p>
+          <p class="text-[11px] leading-tight text-gray-600 dark:text-gray-300"><span class="font-bold">Motivo:</span> ${h.motivo}</p>
+          <p class="text-[9px] mt-2 text-gray-400 italic">${h.detalhe}</p>
+        </div>
+      `).reverse().join('');
+    }
+
+    function normalizeTurma(turma) {
+      return String(turma || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[\s-]/g, '');
+    }
+
+    function getAlunos() {
+      const todosAlunos = JSON.parse(localStorage.getItem('alunos') || '[]');
+      const turmaAtual = normalizeTurma(configTurma.nome);
+      return todosAlunos.filter(a => normalizeTurma(a.turma) === turmaAtual);
+    }
+
+    function renderLista() {
+      const lista = document.getElementById("listaAlunos");
+      const alunos = getAlunos();
+      lista.innerHTML = "";
+
+      if (alunos.length === 0) {
+        lista.innerHTML = '<p class="text-center py-10 text-gray-500">Nenhum aluno cadastrado nesta turma.</p>';
+        return;
+      }
+
+      alunos.forEach((aluno, index) => {
+        const status = localStorage.getItem(`presenca_${configTurma.nome}_${configTurma.data}_${index}`);
+        const div = document.createElement("div");
+        div.className = "flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700/30 rounded-2xl border dark:border-gray-700 hover:border-pink-300 transition";
+
+        div.innerHTML = `
+          <span class="font-bold text-gray-700 dark:text-gray-200">${aluno.nome}</span>
+          <div class="flex gap-2">
+            <button onclick="marcar(${index}, 'presente')" 
+              class="px-4 py-2 rounded-xl text-xs font-bold transition ${status === 'presente' ? 'bg-green-600 text-white shadow-lg' : 'bg-gray-200 dark:bg-gray-600 text-gray-500'}">
+              PRESENTE
+            </button>
+            <button onclick="marcar(${index}, 'ausente')" 
+              class="px-4 py-2 rounded-xl text-xs font-bold transition ${status === 'ausente' ? 'bg-red-600 text-white shadow-lg' : 'bg-gray-200 dark:bg-gray-600 text-gray-500'}">
+              AUSENTE
+            </button>
+          </div>
+        `;
+        lista.appendChild(div);
+      });
+    }
+
+    function marcar(index, status) {
+      localStorage.setItem(`presenca_${configTurma.nome}_${configTurma.data}_${index}`, status);
+      renderLista();
+    }
+
+    function marcarTodos(status) {
+      const alunos = getAlunos();
+      alunos.forEach((_, index) => {
+        localStorage.setItem(`presenca_${configTurma.nome}_${configTurma.data}_${index}`, status);
+      });
+      renderLista();
+    }
+
+    function salvarChamada() {
+      const alunos = getAlunos();
+      const chamada = alunos.map((a, index) => ({
+        nome: a.nome,
+        status: localStorage.getItem(`presenca_${configTurma.nome}_${configTurma.data}_${index}`) || "não marcado"
+      }));
+      localStorage.setItem(`chamada_${configTurma.nome}_${configTurma.data}`, JSON.stringify(chamada));
+      document.getElementById("alertaChamada").classList.remove("hidden");
+    }
+
+    function fecharAlertaChamada() {
+      document.getElementById("alertaChamada").classList.add("hidden");
+    }
+
+    atualizarDisplay();
+  </script>
+</body>
+</html>

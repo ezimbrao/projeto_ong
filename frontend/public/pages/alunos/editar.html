@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Editar aluno</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' };
+  </script>
+  <script src="/assets/shared.js"></script>
+</head>
+<body class="min-h-screen flex flex-col text-gray-800 dark:text-white transition duration-300 bg-gradient-to-r from-pink-300 via-pink-200 to-orange-300 dark:from-[#0f172a] dark:via-[#172554] dark:to-[#020617]">
+  <header class="bg-white shadow-md dark:bg-gray-800 w-full">
+    <nav class="container mx-auto flex justify-between items-center px-6 py-4">
+      <h1 class="text-xl font-bold text-pink-600 dark:text-pink-400">📋 Sistema da ONG</h1>
+      <button class="md:hidden text-2xl" onclick="toggleMenu()">☰</button>
+      <ul class="hidden md:flex items-center space-x-6 font-medium">
+        <li><a href="/pages/home/index.html" class="hover:text-pink-500">Início</a></li>
+        <li><a href="/pages/alunos/cadastro.html" class="hover:text-pink-500">Cadastro</a></li>
+        <li><a href="/pages/turmas/index.html" class="hover:text-pink-500">Turmas</a></li>
+        <li><a href="/pages/alunos/editar.html" class="px-4 py-2 rounded-full bg-pink-100 text-pink-600 dark:bg-pink-900 dark:text-pink-300">Editar alunos</a></li>
+        <li><a id="btnLogin" href="/pages/auth/login.html" class="px-4 py-2 rounded-full border border-pink-500 text-pink-500 hover:bg-pink-500 hover:text-white transition dark:border-pink-500 dark:text-pink-500 dark:hover:bg-pink-500 dark:hover:text-white">Login</a></li>
+        <li><button onclick="toggleDarkMode()" class="px-3 py-1 rounded-md bg-gray-100 dark:bg-gray-700"><span class="theme-icon">🌙</span></button></li>
+      </ul>
+    </nav>
+    <div id="mobile-menu" class="hidden md:hidden bg-white dark:bg-gray-800">
+      <ul class="flex flex-col gap-3 p-4 text-center">
+        <li><a href="/pages/home/index.html">Início</a></li>
+        <li><a href="/pages/alunos/cadastro.html">Cadastro</a></li>
+        <li><a href="/pages/turmas/index.html">Turmas</a></li>
+        <li><a href="/pages/alunos/editar.html" class="block py-2 bg-pink-100 text-pink-600 rounded-full">Editar alunos</a></li>
+        <li><a id="btnLoginMobile" href="/pages/auth/login.html" class="block py-2 border border-pink-500 text-pink-500 rounded-full hover:bg-pink-500 hover:text-white">Login</a></li>
+        <li><button onclick="toggleDarkMode()" class="w-full py-2 bg-gray-100 dark:bg-gray-700 rounded-md"><span class="theme-icon">🌙</span></button></li>
+      </ul>
+    </div>
+  </header>
+
+  <main class="flex-grow py-10 px-4">
+    <div class="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
+      <div class="text-center mb-8">
+        <h2 class="text-3xl font-bold text-pink-600 dark:text-pink-400">Editar informações do aluno</h2>
+        <p class="text-gray-500 dark:text-gray-300 mt-2">Selecione um aluno, altere os dados e troque de turma quando quiser.</p>
+      </div>
+
+      <form id="formEditar" class="grid md:grid-cols-2 gap-6">
+        <div class="md:col-span-2">
+          <label class="block mb-2 font-medium">Aluno</label>
+          <select id="studentId" required class="w-full p-3 rounded-xl border dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-pink-500"></select>
+        </div>
+        <div>
+          <label class="block mb-2 font-medium">Nome</label>
+          <input id="nome" required class="w-full p-3 rounded-xl border dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-pink-500">
+        </div>
+        <div>
+          <label class="block mb-2 font-medium">Data de nascimento</label>
+          <input id="birthDate" type="date" class="w-full p-3 rounded-xl border dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-pink-500">
+        </div>
+        <div>
+          <label class="block mb-2 font-medium">Turma</label>
+          <select id="classId" required class="w-full p-3 rounded-xl border dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-pink-500"></select>
+        </div>
+        <div>
+          <label class="block mb-2 font-medium">Status</label>
+          <select id="status" class="w-full p-3 rounded-xl border dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-pink-500">
+            <option value="Ativo">Ativo</option>
+            <option value="Inativo">Inativo</option>
+          </select>
+        </div>
+        <div class="md:col-span-2">
+          <button type="submit" class="w-full bg-pink-600 text-white py-3 rounded-xl font-semibold hover:bg-pink-700 transition">Salvar alterações</button>
+        </div>
+      </form>
+
+      <div id="message" class="mt-4 text-sm"></div>
+    </div>
+  </main>
+
+  <footer class="bg-gray-200 text-gray-700 text-center py-4 dark:bg-gray-800 dark:text-gray-300">
+    <p>&copy; 2026 Sistema da ONG. Todos os direitos reservados.</p>
+  </footer>
+
+  <div id="logoutModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 dark:bg-opacity-70">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4">
+      <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-4 text-center">Fazer Logout?</h2>
+      <p class="text-gray-600 dark:text-gray-400 text-center mb-8">Você tem certeza que deseja sair? Terá que fazer login novamente.</p>
+      <div class="flex gap-4">
+        <button id="logoutCancel" class="flex-1 px-4 py-3 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition">Cancelar</button>
+        <button id="logoutConfirm" class="flex-1 px-4 py-3 rounded-lg bg-pink-600 text-white font-semibold hover:bg-pink-700 transition">Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const studentSelect = document.getElementById('studentId');
+    const classSelect = document.getElementById('classId');
+    const formEditar = document.getElementById('formEditar');
+    const message = document.getElementById('message');
+
+    async function loadClasses() {
+      const classes = await readJson('/classes');
+      classSelect.innerHTML = classes.map((item) => `<option value="${item.id}">${item.name}</option>`).join('');
+    }
+
+    async function loadStudents() {
+      const students = await readJson('/students');
+      studentSelect.innerHTML = students.map((student) => `<option value="${student.id}">${student.name} - ${student.className}</option>`).join('');
+      if (students[0]) {
+        studentSelect.dispatchEvent(new Event('change'));
+      }
+    }
+
+    studentSelect.addEventListener('change', async () => {
+      const studentId = studentSelect.value;
+      if (!studentId) {
+        return;
+      }
+
+      const student = await readJson(`/students/${studentId}`);
+      document.getElementById('nome').value = student.name;
+      document.getElementById('birthDate').value = student.birthDate || '';
+      document.getElementById('classId').value = student.classId;
+      document.getElementById('status').value = student.status;
+    });
+
+    formEditar.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const studentId = studentSelect.value;
+
+      try {
+        const response = await fetch(`${API_BASE}/students/${studentId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: document.getElementById('nome').value.trim(),
+            birthDate: document.getElementById('birthDate').value || null,
+            classId: Number(classSelect.value),
+            status: document.getElementById('status').value
+          })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Não foi possível atualizar o aluno.');
+        }
+
+        message.innerHTML = `<p class="text-green-600 font-semibold">Alterações salvas com sucesso!</p>`;
+        localStorage.setItem('usuario', document.getElementById('nome').value.trim());
+        await loadStudents();
+      } catch (error) {
+        message.innerHTML = `<p class="text-red-500 font-semibold">${error.message}</p>`;
+      }
+    });
+
+    loadClasses();
+    loadStudents();
+  </script>
+</body>
+</html>
